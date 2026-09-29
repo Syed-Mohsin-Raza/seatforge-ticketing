@@ -1,0 +1,41 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Java / Maven
+target/
+*.class
+*.jar
+!mvnw
+!mvnw.cmd
+.mvn/wrapper/maven-wrapper.jar
+
+# Go
+vendor/
+
+# Node.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AWS CDK
+cdk.out/
+
+# Logs and test results
+*.log
+load-testing/results/
