@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package com.seatforge.booking;
+
+option java_multiple_files = true;
+option java_package = "com.seatforge.booking.grpc";
+
+message BookingRequest {
+    string booking_id = 1;
+}
+
+message BookingResponse {
+    string status = 1;
+}
+
+service BookingService {
+    rpc GetBookingStatus (BookingRequest) returns (BookingResponse);
+}
