@@ -21,6 +21,7 @@ export const options = {
   },
   thresholds: {
     http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(95)<200'],
   },
 };
 
@@ -28,7 +29,7 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const EVENT_ID = __ENV.EVENT_ID || '1';
 
 export default function () {
-  const res = http.get(`${BASE_URL}/api/v1/events/${EVENT_ID}/seats`);
+  const res = http.get(`${BASE_URL}/api/v1/events/${EVENT_ID}/seats/summary`);
 
   check(res, { 'status is 200': (r) => r.status === 200 });
 
@@ -44,7 +45,7 @@ export default function () {
 
 export function handleSummary(data) {
   return {
-    'load-testing/results/before.json': JSON.stringify(data, null, 2),
+    'load-testing/results/before-summary.json': JSON.stringify(data, null, 2),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }

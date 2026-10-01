@@ -36,8 +36,9 @@ public class SeatReservationService {
 
         Booking booking = Booking.hold(seat.getEvent(), seat, userId, Instant.now().plus(holdDuration));
         Booking saved = bookingRepository.save(booking);
-
-        cache.invalidate(seat.getEvent().getId());
+        Long eventId = seat.getEvent().getId();
+        cache.invalidate(eventId);
+        cache.invalidateSummary(eventId);
         return saved;
     }
 
@@ -47,7 +48,9 @@ public class SeatReservationService {
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
         booking.confirm();
         Booking saved = bookingRepository.save(booking);
-        cache.invalidate(saved.getEvent().getId());
+        Long eventId = saved.getEvent().getId();
+        cache.invalidate(eventId);
+        cache.invalidateSummary(eventId);
         return saved;
     }
 
@@ -57,7 +60,9 @@ public class SeatReservationService {
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
         booking.cancel();
         Booking saved = bookingRepository.save(booking);
-        cache.invalidate(saved.getEvent().getId());
+        Long eventId = saved.getEvent().getId();
+        cache.invalidate(eventId);
+        cache.invalidateSummary(eventId);
         return saved;
     }
 }

@@ -29,4 +29,24 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     WHERE s.event.id = :eventId
     """)
     List<Object[]> findSeatsWithStatus(@Param("eventId") Long eventId);
+
+    @Query(value = """
+    SELECT
+        s.section,
+        COUNT(*) FILTER (WHERE b.status IS NULL OR b.status NOT IN ('HELD', 'CONFIRMED')) AS available,
+        COUNT(*) FILTER (WHERE b.status = 'HELD')     AS held,
+        COUNT(*) FILTER (WHERE b.status = 'CONFIRMED') AS confirmed,
+        COUNT(*)                                       AS total
+    FROM seats s
+    LEFT JOIN (
+        SELECT DISTINCT ON (seat_id) seat_id, status
+        FROM bookings
+        WHERE status IN ('HELD', 'CONFIRMED')
+        ORDER BY seat_id, id DESC
+    ) b ON b.seat_id = s.id
+    WHERE s.event_id = :eventId
+    GROUP BY s.section
+    ORDER BY s.section
+    """, nativeQuery = true)
+    List<Object[]> summarizeBySection(@Param("eventId") Long eventId);
 }

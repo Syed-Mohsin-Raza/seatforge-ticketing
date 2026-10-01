@@ -6,7 +6,9 @@ import com.seatforge.booking.domain.Seat;
 import com.seatforge.booking.repository.BookingRepository;
 import com.seatforge.booking.repository.SeatRepository;
 import com.seatforge.booking.service.SeatAvailabilityCache;
+import com.seatforge.booking.web.dto.EventSummaryResponse;
 import com.seatforge.booking.web.dto.SeatResponse;
+import com.seatforge.booking.web.dto.SectionSummaryResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,6 +54,49 @@ public class SeatController {
         return ResponseEntity.ok()
                 .header("X-Cache", "MISS")
                 .body(responses);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<EventSummaryResponse> summary(@PathVariable Long eventId) {
+        Optional<EventSummaryResponse> cached = cache.getSummary(eventId);
+        if (cached.isPresent()) {
+            return ResponseEntity.ok()
+                    .header("X-Cache", "HIT")
+                    .body(cached.get());
+        }
+
+        List<Object[]> rows = seatRepository.summarizeBySection(eventId);
+        if (rows.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        long totalAvailable = 0;
+        long totalHeld = 0;
+        long totalConfirmed = 0;
+        long grandTotal = 0;
+        List<SectionSummaryResponse> sections = new java.util.ArrayList<>(rows.size());
+
+        for (Object[] row : rows) {
+            String section = (String) row[0];
+            long available = ((Number) row[1]).longValue();
+            long held = ((Number) row[2]).longValue();
+            long confirmed = ((Number) row[3]).longValue();
+            long total = ((Number) row[4]).longValue();
+
+            sections.add(new SectionSummaryResponse(section, total, available, held, confirmed));
+            totalAvailable += available;
+            totalHeld += held;
+            totalConfirmed += confirmed;
+            grandTotal += total;
+        }
+
+        EventSummaryResponse response = new EventSummaryResponse(
+                eventId, grandTotal, totalAvailable, totalHeld, totalConfirmed, sections);
+
+        cache.putSummary(eventId, response);
+        return ResponseEntity.ok()
+                .header("X-Cache", "MISS")
+                .body(response);
     }
 
     private List<SeatResponse> loadFromDb(Long eventId) {

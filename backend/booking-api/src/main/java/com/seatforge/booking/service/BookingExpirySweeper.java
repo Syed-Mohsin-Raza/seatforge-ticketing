@@ -41,7 +41,10 @@ public class BookingExpirySweeper {
             affectedEventIds.add(b.getEvent().getId());
         }
         bookingRepository.saveAll(stale);
-        affectedEventIds.forEach(cache::invalidate);
+        affectedEventIds.forEach(eventId -> {
+            cache.invalidate(eventId);
+            cache.invalidateSummary(eventId);
+        });
         log.info("Expired {} stale holds, invalidated {} event caches", stale.size(), affectedEventIds.size());
     }
 }

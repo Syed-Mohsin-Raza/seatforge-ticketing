@@ -1,5 +1,6 @@
 package com.seatforge.booking.service;
 
+import com.seatforge.booking.web.dto.EventSummaryResponse;
 import com.seatforge.booking.web.dto.SeatResponse;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -25,6 +26,8 @@ public class SeatAvailabilityCache {
     private final Counter cacheMisses;
     private final Counter cacheInvalidations;
     private final Counter cacheWrites;
+    private final Counter summaryHits;
+    private final Counter summaryMisses;
 
     public SeatAvailabilityCache(StringRedisTemplate redis,
                                  JsonMapper jsonMapper,
@@ -35,6 +38,8 @@ public class SeatAvailabilityCache {
         this.cacheMisses = meterRegistry.counter("seat.cache.misses");
         this.cacheInvalidations = meterRegistry.counter("seat.cache.invalidations");
         this.cacheWrites = meterRegistry.counter("seat.cache.writes");
+        this.summaryHits = meterRegistry.counter("seat.cache.summary.hits");
+        this.summaryMisses = meterRegistry.counter("seat.cache.summary.misses");
     }
 
     public Optional<List<SeatResponse>> get(Long eventId) {
@@ -81,4 +86,47 @@ public class SeatAvailabilityCache {
     private String key(Long eventId) {
         return "seatlist:event:" + eventId;
     }
+
+    public Optional<EventSummaryResponse> getSummary(Long eventId) {
+        String key = summaryKey(eventId);
+        String json = redis.opsForValue().get(key);
+        if (json == null) {
+            return Optional.empty();
+        }
+        try {
+            EventSummaryResponse summary = jsonMapper.readValue(json, EventSummaryResponse.class);
+            return Optional.of(summary);
+        } catch (Exception e) {
+            log.warn("Summary cache deserialization failed for event {}, evicting key", eventId, e);
+            redis.delete(key);
+            return Optional.empty();
+        }
+    }
+
+    public void putSummary(Long eventId, EventSummaryResponse summary) {
+        try {
+            String json = jsonMapper.writeValueAsString(summary);
+            redis.opsForValue().set(summaryKey(eventId), json, TTL);
+            cacheWrites.increment();
+        } catch (Exception e) {
+            log.warn("Summary cache serialization failed for event {}, skipping cache", eventId, e);
+        }
+    }
+
+    public void invalidateSummary(Long eventId) {
+        redis.delete(summaryKey(eventId));
+        cacheInvalidations.increment();
+    }
+
+    private String summaryKey(Long eventId) {
+        return "seatsummary:event:" + eventId;
+    }
+
+    public void recordSummaryHit() {
+        summaryHits.increment();
+    }
+    public void recordSummaryMiss() {
+        summaryMisses.increment();
+    }
+
 }
