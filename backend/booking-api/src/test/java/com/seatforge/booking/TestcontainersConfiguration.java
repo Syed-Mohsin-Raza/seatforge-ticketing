@@ -1,5 +1,6 @@
 package com.seatforge.booking;
 
+import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -13,5 +14,11 @@ public class TestcontainersConfiguration {
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
 		return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
+	}
+
+	@Bean
+	@ServiceConnection(name = "redis")
+	RedisContainer redisContainer() {
+		return new RedisContainer(DockerImageName.parse("redis:7-alpine"));
 	}
 }

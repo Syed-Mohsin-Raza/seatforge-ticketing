@@ -16,32 +16,29 @@ public class SeatReservationService {
 
     private final SeatRepository seatRepository;
     private final BookingRepository bookingRepository;
+    private final SeatAvailabilityCache cache;
 
-    public SeatReservationService(SeatRepository seatRepository, BookingRepository bookingRepository) {
+    public SeatReservationService(SeatRepository seatRepository, BookingRepository bookingRepository, SeatAvailabilityCache cache) {
         this.seatRepository = seatRepository;
         this.bookingRepository = bookingRepository;
+        this.cache = cache;
     }
 
     @Transactional
     public Booking holdSeat(Long seatId, String userId, Duration holdDuration) {
-        // Pessimistic lock — blocks other transactions until this one commits
         Seat seat = seatRepository.findByIdForUpdate(seatId)
                 .orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
 
-        // Check for existing confirmed booking
         bookingRepository.findBySeatIdAndStatus(seatId, BookingStatus.CONFIRMED)
-                .ifPresent(b -> {
-                    throw new IllegalStateException("Seat already confirmed: " + seatId);
-                });
-
-        // Check for existing active hold
+                .ifPresent(b -> { throw new IllegalStateException("Seat already confirmed: " + seatId); });
         bookingRepository.findBySeatIdAndStatus(seatId, BookingStatus.HELD)
-                .ifPresent(b -> {
-                    throw new IllegalStateException("Seat already held: " + seatId);
-                });
+                .ifPresent(b -> { throw new IllegalStateException("Seat already held: " + seatId); });
 
         Booking booking = Booking.hold(seat.getEvent(), seat, userId, Instant.now().plus(holdDuration));
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        cache.invalidate(seat.getEvent().getId());
+        return saved;
     }
 
     @Transactional
@@ -49,7 +46,9 @@ public class SeatReservationService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
         booking.confirm();
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        cache.invalidate(saved.getEvent().getId());
+        return saved;
     }
 
     @Transactional
@@ -57,6 +56,8 @@ public class SeatReservationService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
         booking.cancel();
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        cache.invalidate(saved.getEvent().getId());
+        return saved;
     }
 }
