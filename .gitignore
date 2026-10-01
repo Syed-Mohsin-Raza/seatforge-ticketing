@@ -8,6 +8,7 @@ secrets/
 
 # Java / Maven
 target/
+**/target/
 *.class
 *.jar
 !mvnw
@@ -39,3 +40,8 @@ cdk.out/
 # Logs and test results
 *.log
 load-testing/results/
+
+
+node_modules/
+frontend/.next/
+cdk.out/
