@@ -1,6 +1,8 @@
 package com.seatforge.booking.service;
 
 import com.seatforge.booking.web.dto.SeatResponse;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -19,10 +21,20 @@ public class SeatAvailabilityCache {
 
     private final StringRedisTemplate redis;
     private final JsonMapper jsonMapper;
+    private final Counter cacheHits;
+    private final Counter cacheMisses;
+    private final Counter cacheInvalidations;
+    private final Counter cacheWrites;
 
-    public SeatAvailabilityCache(StringRedisTemplate redis, JsonMapper jsonMapper) {
+    public SeatAvailabilityCache(StringRedisTemplate redis,
+                                 JsonMapper jsonMapper,
+                                 MeterRegistry meterRegistry) {
         this.redis = redis;
         this.jsonMapper = jsonMapper;
+        this.cacheHits = meterRegistry.counter("seat.cache.hits");
+        this.cacheMisses = meterRegistry.counter("seat.cache.misses");
+        this.cacheInvalidations = meterRegistry.counter("seat.cache.invalidations");
+        this.cacheWrites = meterRegistry.counter("seat.cache.writes");
     }
 
     public Optional<List<SeatResponse>> get(Long eventId) {
@@ -47,6 +59,7 @@ public class SeatAvailabilityCache {
         try {
             String json = jsonMapper.writeValueAsString(seats);
             redis.opsForValue().set(key(eventId), json, TTL);
+            cacheWrites.increment();
         } catch (Exception e) {
             log.warn("Cache serialization failed for event {}, skipping cache", eventId, e);
         }
@@ -54,6 +67,15 @@ public class SeatAvailabilityCache {
 
     public void invalidate(Long eventId) {
         redis.delete(key(eventId));
+        cacheInvalidations.increment();
+    }
+
+    public void recordHit() {
+        cacheHits.increment();
+    }
+
+    public void recordMiss() {
+        cacheMisses.increment();
     }
 
     private String key(Long eventId) {

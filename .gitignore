@@ -40,8 +40,10 @@ cdk.out/
 # Logs and test results
 *.log
 load-testing/results/
+load-testing/results/*
 
 
 node_modules/
 frontend/.next/
 cdk.out/
+load-testing/results/

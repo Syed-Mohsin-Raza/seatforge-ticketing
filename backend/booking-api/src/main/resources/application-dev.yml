@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/seatforge
+    username: seatforge
+    password: seatforge
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  flyway:
+    locations: classpath:db/migration,classpath:db/dev
