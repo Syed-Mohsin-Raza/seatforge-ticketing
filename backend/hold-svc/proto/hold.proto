@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package seatforge.hold.v1;
+
+option go_package = "github.com/Syed-Mohsin-Raza/seatforge-ticketing/backend/hold-svc/internal/pb;pb";
+
+service HoldService {
+  rpc ReserveSeat(ReserveSeatRequest) returns (ReserveSeatResponse);
+  rpc ReleaseSeat(ReleaseSeatRequest) returns (ReleaseSeatResponse);
+}
+
+message ReserveSeatRequest {
+  int64 event_id = 1;
+  int64 seat_id = 2;
+  string user_id = 3;
+  int32 hold_duration_seconds = 4;
+}
+
+message ReserveSeatResponse {
+  int64 booking_id = 1;
+  string status = 2;
+  int64 expires_at_epoch_ms = 3;
+}
+
+message ReleaseSeatRequest {
+  int64 booking_id = 1;
+}
+
+message ReleaseSeatResponse {
+  bool released = 1;
+}

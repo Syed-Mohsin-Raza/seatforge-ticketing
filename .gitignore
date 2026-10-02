@@ -47,3 +47,5 @@ node_modules/
 frontend/.next/
 cdk.out/
 load-testing/results/
+backend/hold-svc/bin/
+backend/hold-svc/internal/pb/
