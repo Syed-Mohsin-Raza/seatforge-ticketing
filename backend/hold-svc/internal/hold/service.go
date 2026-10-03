@@ -16,17 +16,12 @@ var (
 	ErrSeatAlreadyBooked = errors.New("seat already confirmed")
 )
 
-type DBTX interface {
-    BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
-    ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-}
-
 type Service struct {
-    db DBTX
+	db *sql.DB
 }
 
-func NewService(db DBTX) *Service {
-    return &Service{db: db}
+func NewService(db *sql.DB) *Service {
+	return &Service{db: db}
 }
 
 func (s *Service) ReserveSeat(ctx context.Context, req *pb.ReserveSeatRequest) (*pb.ReserveSeatResponse, error) {
@@ -43,27 +38,28 @@ func (s *Service) ReserveSeat(ctx context.Context, req *pb.ReserveSeatRequest) (
 		`SELECT id, event_id FROM seats WHERE id = $1 FOR UPDATE`,
 		req.SeatId).Scan(&seatID, &eventID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrSeatNotFound
+		return nil, fmt.Errorf("%w: seat_id=%d", ErrSeatNotFound, req.SeatId)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("lock seat: %w", err)
 	}
 
 	// Check for existing active booking on this seat.
+	// Note: sql.ErrNoRows here means the seat is available, not missing.
 	var existingStatus string
 	err = tx.QueryRowContext(ctx,
-		`SELECT status FROM bookings
-		 WHERE seat_id = $1 AND status IN ('HELD', 'CONFIRMED')
-		 LIMIT 1`,
-		req.SeatId).Scan(&existingStatus)
+    	`SELECT status FROM bookings
+    	WHERE seat_id = $1 AND status IN ('HELD', 'CONFIRMED')
+   	  	LIMIT 1`,
+   		 req.SeatId).Scan(&existingStatus)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("check existing: %w", err)
+    	return nil, fmt.Errorf("check existing: %w", err)
 	}
 	if existingStatus == "CONFIRMED" {
-		return nil, ErrSeatAlreadyBooked
+    	return nil, fmt.Errorf("%w: seat_id=%d", ErrSeatAlreadyBooked, req.SeatId)
 	}
 	if existingStatus == "HELD" {
-		return nil, ErrSeatAlreadyHeld
+ 		return nil, fmt.Errorf("%w: seat_id=%d", ErrSeatAlreadyHeld, req.SeatId)
 	}
 
 	// Insert the hold.

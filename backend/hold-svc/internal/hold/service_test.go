@@ -41,7 +41,6 @@ func TestReserveSeat(t *testing.T) {
 	svc := NewService(database)
 
 	resp, err := svc.ReserveSeat(ctx, &pb.ReserveSeatRequest{
-		EventId:             1,
 		SeatId:              seatID,
 		UserId:              "test-user",
 		HoldDurationSeconds: 60,
@@ -55,7 +54,6 @@ func TestReserveSeat(t *testing.T) {
 
 	// Second reservation should fail.
 	_, err = svc.ReserveSeat(ctx, &pb.ReserveSeatRequest{
-		EventId:             1,
 		SeatId:              seatID,
 		UserId:              "other-user",
 		HoldDurationSeconds: 60,
@@ -110,7 +108,6 @@ func TestReserveSeat_Concurrent(t *testing.T) {
             defer wg.Done()
             <-start
             _, err := svc.ReserveSeat(ctx, &pb.ReserveSeatRequest{
-                EventId:             1,
                 SeatId:              seatID,
                 UserId:              userID,
                 HoldDurationSeconds: 60,
