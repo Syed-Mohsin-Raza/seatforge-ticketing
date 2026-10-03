@@ -18,7 +18,14 @@ import java.util.Optional;
 public class SeatAvailabilityCache {
 
     private static final Logger log = LoggerFactory.getLogger(SeatAvailabilityCache.class);
-    private static final Duration TTL = Duration.ofSeconds(60);
+    private static final Duration BASE_TTL = Duration.ofSeconds(60);
+    private static final Duration JITTER_MAX = Duration.ofSeconds(15);
+
+    private Duration ttlWithJitter() {
+        long jitterMillis = java.util.concurrent.ThreadLocalRandom.current()
+                .nextLong(JITTER_MAX.toMillis() + 1);
+        return BASE_TTL.plusMillis(jitterMillis);
+    }
 
     private final StringRedisTemplate redis;
     private final JsonMapper jsonMapper;
@@ -63,7 +70,7 @@ public class SeatAvailabilityCache {
     public void put(Long eventId, List<SeatResponse> seats) {
         try {
             String json = jsonMapper.writeValueAsString(seats);
-            redis.opsForValue().set(key(eventId), json, TTL);
+            redis.opsForValue().set(key(eventId), json, ttlWithJitter());
             cacheWrites.increment();
         } catch (Exception e) {
             log.warn("Cache serialization failed for event {}, skipping cache", eventId, e);
@@ -106,7 +113,7 @@ public class SeatAvailabilityCache {
     public void putSummary(Long eventId, EventSummaryResponse summary) {
         try {
             String json = jsonMapper.writeValueAsString(summary);
-            redis.opsForValue().set(summaryKey(eventId), json, TTL);
+            redis.opsForValue().set(summaryKey(eventId), json, ttlWithJitter());
             cacheWrites.increment();
         } catch (Exception e) {
             log.warn("Summary cache serialization failed for event {}, skipping cache", eventId, e);

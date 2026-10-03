@@ -27,5 +27,20 @@ services:
       timeout: 5s
       retries: 5
 
+
+  hold-svc:
+    build:
+      context: ./backend/hold-svc
+      dockerfile: Dockerfile
+    container_name: seatforge-hold-svc
+    environment:
+      DATABASE_URL: postgres://seatforge:seatforge@postgres:5432/seatforge?sslmode=disable
+      GRPC_PORT: 9090
+    ports:
+      - "9090:9090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:

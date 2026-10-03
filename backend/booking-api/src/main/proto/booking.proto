@@ -1,18 +1,32 @@
 syntax = "proto3";
 
-package com.seatforge.booking;
+package seatforge.hold.v1;
 
 option java_multiple_files = true;
-option java_package = "com.seatforge.booking.grpc";
+option java_package = "com.seatforge.hold.v1";
+option java_outer_classname = "HoldProto";
 
-message BookingRequest {
-    string booking_id = 1;
+service HoldService {
+    rpc ReserveSeat(ReserveSeatRequest) returns (ReserveSeatResponse);
+    rpc ReleaseSeat(ReleaseSeatRequest) returns (ReleaseSeatResponse);
 }
 
-message BookingResponse {
-    string status = 1;
+message ReserveSeatRequest {
+    int64 seat_id = 1;
+    string user_id = 2;
+    int32 hold_duration_seconds = 3;
 }
 
-service BookingService {
-    rpc GetBookingStatus (BookingRequest) returns (BookingResponse);
+message ReserveSeatResponse {
+    int64 booking_id = 1;
+    string status = 2;
+    int64 expires_at_epoch_ms = 3;
+}
+
+message ReleaseSeatRequest {
+    int64 booking_id = 1;
+}
+
+message ReleaseSeatResponse {
+    bool released = 1;
 }
