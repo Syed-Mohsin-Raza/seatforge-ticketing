@@ -15,8 +15,8 @@ func Open(ctx context.Context, url string) (*sql.DB, error) {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(5)
+	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(30 * time.Minute)
 
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
