@@ -3,9 +3,16 @@ spring:
     url: jdbc:postgresql://localhost:5432/seatforge
     username: seatforge
     password: seatforge
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
   data:
     redis:
       host: localhost
       port: 6379
   flyway:
     locations: classpath:db/migration,classpath:db/dev
+
+seatforge:
+  hold-svc:
+    address: localhost:9090
