@@ -49,3 +49,4 @@ cdk.out/
 load-testing/results/
 backend/hold-svc/bin/
 backend/hold-svc/internal/pb/
+backend/payment-svc/target/
