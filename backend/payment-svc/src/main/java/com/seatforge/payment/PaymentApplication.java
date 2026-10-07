@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PaymentApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) throws InterruptedException {
         SpringApplication.run(PaymentApplication.class, args);
+        Thread.currentThread().join();
     }
 }
