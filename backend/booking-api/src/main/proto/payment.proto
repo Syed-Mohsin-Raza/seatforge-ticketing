@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package seatforge.payment.v1;
+
+option java_multiple_files = true;
+option java_package = "com.seatforge.payment.v1";
+option java_outer_classname = "PaymentProto";
+
+service PaymentService {
+  rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse);
+  rpc Capture(CaptureRequest) returns (CaptureResponse);
+  rpc Void(VoidRequest) returns (VoidResponse);
+}
+
+message AuthorizeRequest {
+  int64 booking_id = 1;
+  string user_id = 2;
+  int64 amount_cents = 3;
+  string idempotency_key = 4;
+}
+
+message AuthorizeResponse {
+  string authorization_id = 1;
+  string status = 2;
+  string provider_reference = 3;
+}
+
+message CaptureRequest {
+  string authorization_id = 1;
+}
+
+message CaptureResponse {
+  string status = 1;
+}
+
+message VoidRequest {
+  string authorization_id = 1;
+}
+
+message VoidResponse {
+  string status = 1;
+}
