@@ -26,4 +26,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                     AND b2.status IN ('HELD', 'CONFIRMED'))
     """)
     List<Object[]> findLatestActiveStatuses(@Param("seatIds") List<Long> seatIds);
+
+    @Query("SELECT b FROM Booking b JOIN FETCH b.seat JOIN FETCH b.event WHERE b.id = :id")
+    Optional<Booking> findByIdWithSeatAndEvent(@Param("id") Long id);
 }

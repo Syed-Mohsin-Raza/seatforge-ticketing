@@ -36,6 +36,9 @@ public class Booking {
     @Column(name = "hold_expires_at")
     private Instant holdExpiresAt;
 
+    @Column(name = "payment_authorization_id", length = 64)
+    private String paymentAuthorizationId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
