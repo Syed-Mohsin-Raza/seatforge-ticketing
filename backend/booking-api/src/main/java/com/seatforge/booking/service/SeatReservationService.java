@@ -3,6 +3,10 @@ package com.seatforge.booking.service;
 import com.seatforge.booking.domain.Booking;
 import com.seatforge.booking.domain.BookingStatus;
 import com.seatforge.booking.domain.Seat;
+import com.seatforge.booking.event.BookingCancelledEvent;
+import com.seatforge.booking.event.BookingConfirmedEvent;
+import com.seatforge.booking.event.BookingHeldEvent;
+import com.seatforge.booking.event.NotificationPublisher;
 import com.seatforge.booking.grpc.HoldServiceClient;
 import com.seatforge.booking.grpc.PaymentServiceClient;
 import com.seatforge.booking.repository.BookingRepository;
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 public class SeatReservationService {
@@ -28,17 +33,20 @@ public class SeatReservationService {
     private final SeatAvailabilityCache cache;
     private final HoldServiceClient holdServiceClient;
     private final PaymentServiceClient paymentServiceClient;
+    private final NotificationPublisher notificationPublisher;
 
     public SeatReservationService(SeatRepository seatRepository,
                                   BookingRepository bookingRepository,
                                   SeatAvailabilityCache cache,
                                   HoldServiceClient holdServiceClient,
-                                  PaymentServiceClient paymentServiceClient) {
+                                  PaymentServiceClient paymentServiceClient,
+                                  NotificationPublisher notificationPublisher) {
         this.seatRepository = seatRepository;
         this.bookingRepository = bookingRepository;
         this.cache = cache;
         this.holdServiceClient = holdServiceClient;
         this.paymentServiceClient = paymentServiceClient;
+        this.notificationPublisher = notificationPublisher;
     }
 
     public Booking holdSeat(Long seatId, String userId, Duration holdDuration) {
@@ -64,6 +72,14 @@ public class SeatReservationService {
 
         cache.invalidate(saved.getEvent().getId());
         cache.invalidateSummary(saved.getEvent().getId());
+        notificationPublisher.publish(new BookingHeldEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                saved.getId(),
+                saved.getSeat().getId(),
+                saved.getEvent().getId(),
+                saved.getUserId(),
+                saved.getHoldExpiresAt()));
         return saved;
     }
 
@@ -136,10 +152,17 @@ public class SeatReservationService {
         Long eventId = saved.getEvent().getId();
         cache.invalidate(eventId);
         cache.invalidateSummary(eventId);
+        notificationPublisher.publish(new BookingConfirmedEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                saved.getId(),
+                saved.getSeat().getId(),
+                saved.getEvent().getId(),
+                saved.getUserId(),
+                saved.getPaymentAuthorizationId()));
         return saved;
     }
 
-    @Transactional
     public Booking cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
@@ -148,6 +171,13 @@ public class SeatReservationService {
         Long eventId = saved.getEvent().getId();
         cache.invalidate(eventId);
         cache.invalidateSummary(eventId);
+        notificationPublisher.publish(new BookingCancelledEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                saved.getId(),
+                saved.getSeat().getId(),
+                saved.getEvent().getId(),
+                saved.getUserId()));
         return saved;
     }
 }

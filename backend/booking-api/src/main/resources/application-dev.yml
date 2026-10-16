@@ -18,3 +18,7 @@ seatforge:
     address: localhost:9090
   payment-svc:
     address: localhost:9091
+  aws:
+    endpoint: http://localhost:4566
+    access-key: test
+    secret-key: test

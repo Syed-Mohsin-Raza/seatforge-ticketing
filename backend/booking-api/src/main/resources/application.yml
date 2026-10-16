@@ -35,3 +35,11 @@ management:
     metrics:
       export:
         enabled: true
+
+seatforge:
+  events:
+    publisher: sns
+    topic-arn: arn:aws:sns:us-east-1:000000000000:seatforge-bookings
+  aws:
+    region: us-east-1
+    # endpoint and credentials are set in application-dev.yml
