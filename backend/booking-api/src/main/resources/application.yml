@@ -43,3 +43,8 @@ seatforge:
   aws:
     region: us-east-1
     # endpoint and credentials are set in application-dev.yml
+  jwt:
+    # WARNING: This fallback is intentionally invalid and will cause startup to fail.
+    # Set SEATFORGE_JWT_SECRET to a random value of at least 32 bytes.
+    # Generate one with: openssl rand -base64 48
+    secret: ${SEATFORGE_JWT_SECRET:dev-secret-change-me}

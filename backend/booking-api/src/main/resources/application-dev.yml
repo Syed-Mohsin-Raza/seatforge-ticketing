@@ -22,3 +22,7 @@ seatforge:
     endpoint: http://localhost:4566
     access-key: test
     secret-key: test
+  jwt:
+    # Local development only. 48 random bytes, Base64-encoded.
+    # This is a fixed test secret; never use it outside local dev.
+    secret: "dGhpcy1pcy1hLWRldi1vbmx5LXNlY3JldC1mb3Itc2VhdGZvcmdlLXRlc3RpbmctcHVycG9zZXM="
