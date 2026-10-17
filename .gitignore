@@ -50,3 +50,4 @@ load-testing/results/
 backend/hold-svc/bin/
 backend/hold-svc/internal/pb/
 backend/payment-svc/target/
+backend/notification-svc/bin/
