@@ -48,3 +48,4 @@ seatforge:
     # Set SEATFORGE_JWT_SECRET to a random value of at least 32 bytes.
     # Generate one with: openssl rand -base64 48
     secret: ${SEATFORGE_JWT_SECRET:dev-secret-change-me}
+    ttl-minutes: 60

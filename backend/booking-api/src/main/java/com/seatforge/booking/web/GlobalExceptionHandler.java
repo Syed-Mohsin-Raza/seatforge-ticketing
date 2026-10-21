@@ -1,5 +1,6 @@
 package com.seatforge.booking.web;
 
+import com.seatforge.booking.service.exceptions.InvalidCredentialsException;
 import com.seatforge.booking.service.exceptions.PaymentRequiredException;
 import com.seatforge.booking.service.exceptions.UserAlreadyExistsException;
 import com.seatforge.booking.web.dto.ErrorResponse;
@@ -46,5 +47,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
                 409, "Conflict", ex.getMessage(), null, Instant.now()));
+    }
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(
+                401, "Unauthorized", ex.getMessage(), null, Instant.now()));
     }
 }
