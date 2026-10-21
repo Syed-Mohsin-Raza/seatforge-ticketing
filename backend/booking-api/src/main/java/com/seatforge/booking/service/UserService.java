@@ -2,6 +2,7 @@ package com.seatforge.booking.service;
 
 import com.seatforge.booking.domain.User;
 import com.seatforge.booking.repository.UserRepository;
+import com.seatforge.booking.service.exceptions.UserAlreadyExistsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +21,7 @@ public class UserService {
     @Transactional
     public User register(String email, String rawPassword) {
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already registered: " + email);
+            throw new UserAlreadyExistsException("Email already registered: " + email);
         }
         String hash = passwordEncoder.encode(rawPassword);
         return userRepository.save(User.create(email, hash));

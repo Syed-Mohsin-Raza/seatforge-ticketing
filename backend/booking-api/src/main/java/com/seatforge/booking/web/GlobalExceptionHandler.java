@@ -1,6 +1,7 @@
 package com.seatforge.booking.web;
 
 import com.seatforge.booking.service.exceptions.PaymentRequiredException;
+import com.seatforge.booking.service.exceptions.UserAlreadyExistsException;
 import com.seatforge.booking.web.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,5 +41,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handlePaymentRequired(PaymentRequiredException ex) {
         return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(new ErrorResponse(
                 402, "Payment Required", ex.getMessage(), null, Instant.now()));
+    }
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                409, "Conflict", ex.getMessage(), null, Instant.now()));
     }
 }

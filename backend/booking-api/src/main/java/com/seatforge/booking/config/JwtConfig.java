@@ -74,7 +74,6 @@ public class JwtConfig {
                     "JWT secret is rejected by JJWT: " + e.getMessage(), e);
         }
     }
-    
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
