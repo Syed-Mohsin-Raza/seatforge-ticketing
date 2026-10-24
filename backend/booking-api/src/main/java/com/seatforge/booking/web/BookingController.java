@@ -1,11 +1,13 @@
 package com.seatforge.booking.web;
 
 import com.seatforge.booking.domain.Booking;
+import com.seatforge.booking.security.AuthenticatedUser;
 import com.seatforge.booking.service.SeatReservationService;
 import com.seatforge.booking.web.dto.BookingResponse;
 import com.seatforge.booking.web.dto.HoldSeatRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -24,23 +26,32 @@ public class BookingController {
     }
 
     @PostMapping("/holds")
-    public ResponseEntity<BookingResponse> holdSeat(@Valid @RequestBody HoldSeatRequest request) {
+    public ResponseEntity<BookingResponse> holdSeat(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @Valid @RequestBody HoldSeatRequest request
+    ) {
         Booking booking = reservationService.holdSeat(
-                request.seatId(), request.userId(), DEFAULT_HOLD_DURATION);
+                request.seatId(),
+                user.userId().toString(),
+                DEFAULT_HOLD_DURATION);
         BookingResponse response = toResponse(booking);
         return ResponseEntity.created(URI.create("/api/v1/bookings/" + booking.getId()))
                 .body(response);
     }
 
     @PostMapping("/{id}/confirm")
-    public ResponseEntity<BookingResponse> confirm(@PathVariable Long id) {
-        Booking booking = reservationService.confirmBooking(id);
+    public ResponseEntity<BookingResponse> confirm(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable Long id) {
+        Booking booking = reservationService.confirmBooking(id, user.userId());
         return ResponseEntity.ok(toResponse(booking));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancel(@PathVariable Long id) {
-        reservationService.cancelBooking(id);
+    public ResponseEntity<Void> cancel(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable Long id) {
+        reservationService.cancelBooking(id, user.userId());
         return ResponseEntity.noContent().build();
     }
 

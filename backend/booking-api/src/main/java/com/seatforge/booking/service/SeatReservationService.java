@@ -16,6 +16,7 @@ import com.seatforge.hold.v1.ReserveSeatResponse;
 import com.seatforge.payment.v1.AuthorizeResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,9 +101,13 @@ public class SeatReservationService {
      *   - The idempotency key sent to payment-svc is deterministic
      *     ("booking-{id}-auth"), so retries hit the same authorization.
      */
-    public Booking confirmBooking(Long bookingId) {
+    public Booking confirmBooking(Long bookingId, UUID authenticatedUserId) {
         Booking booking = bookingRepository.findByIdWithSeatAndEvent(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
+
+        if (!booking.getUserId().equals(authenticatedUserId.toString())) {
+            throw new AccessDeniedException("Booking does not belong to authenticated user");
+        }
 
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             log.info("Confirm idempotent hit for booking {}", bookingId);
@@ -163,9 +168,14 @@ public class SeatReservationService {
         return saved;
     }
 
-    public Booking cancelBooking(Long bookingId) {
+    public Booking cancelBooking(Long bookingId, UUID authenticatedUserId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
+
+        if (!booking.getUserId().equals(authenticatedUserId.toString())) {
+            throw new AccessDeniedException("Booking does not belong to authenticated user");
+        }
+
         booking.cancel();
         Booking saved = bookingRepository.save(booking);
         Long eventId = saved.getEvent().getId();
